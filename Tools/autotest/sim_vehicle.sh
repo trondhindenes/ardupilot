@@ -224,7 +224,7 @@ and in your \$PATH
 
 Please get it from git://github.com/tridge/jsbsim.git
 See 
-  http://dev.ardupilot.com/wiki/simulation-2/sitl-simulator-software-in-the-loop/setting-up-sitl-on-linux/ 
+  http://dev.ardupilot.org/wiki/simulation-2/sitl-simulator-software-in-the-loop/setting-up-sitl-on-linux/ 
 for more details
 =========================================================
 EOF
@@ -257,6 +257,21 @@ case $FRAME in
 	BUILD_TARGET="sitl-octa"
         MODEL="$FRAME"
         DEFAULTS_PATH="$autotest/copter_params.parm"
+	;;
+    tri*)
+	BUILD_TARGET="sitl-tri"
+        MODEL="$FRAME"
+        DEFAULTS_PATH="$autotest/tri_params.parm"
+	;;
+    y6*)
+	BUILD_TARGET="sitl-y6"
+        MODEL="$FRAME"
+        DEFAULTS_PATH="$autotest/y6_params.parm"
+	;;
+    firefly*)
+	BUILD_TARGET="sitl"
+        MODEL="$FRAME"
+        DEFAULTS_PATH="$autotest/firefly.parm"
 	;;
     heli*)
 	BUILD_TARGET="sitl-heli"
@@ -297,6 +312,21 @@ case $FRAME in
 	BUILD_TARGET="sitl"
         MODEL="$FRAME"
         DEFAULTS_PATH="$autotest/quadplane.parm"
+	;;
+    plane-elevon*)
+	BUILD_TARGET="sitl"
+        MODEL="$FRAME"
+        DEFAULTS_PATH="$autotest/plane-elevons.parm"
+	;;
+    plane-vtail*)
+	BUILD_TARGET="sitl"
+        MODEL="$FRAME"
+        DEFAULTS_PATH="$autotest/plane-vtail.parm"
+	;;
+    plane*)
+	BUILD_TARGET="sitl"
+        MODEL="$FRAME"
+        DEFAULTS_PATH="$autotest/plane.parm"
 	;;
     *-heli)
 	BUILD_TARGET="sitl-heli"

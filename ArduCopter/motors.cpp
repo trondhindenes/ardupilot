@@ -194,7 +194,7 @@ bool Copter::init_arm_motors(bool arming_from_gcs)
     Log_Write_Event(DATA_ARMED);
 
     // log flight mode in case it was changed while vehicle was disarmed
-    DataFlash.Log_Write_Mode(control_mode);
+    DataFlash.Log_Write_Mode(control_mode, control_mode_reason);
 
     // reenable failsafe
     failsafe_enable();
@@ -222,9 +222,13 @@ void Copter::init_disarm_motors()
 #endif
 
     // save compass offsets learned by the EKF
-    Vector3f magOffsets;
-    if (ahrs.use_compass() && ahrs.getMagOffsets(magOffsets)) {
-        compass.set_and_save_offsets(compass.get_primary(), magOffsets);
+    if (ahrs.use_compass()) {
+        for(uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
+            Vector3f magOffsets;
+            if (ahrs.getMagOffsets(i, magOffsets)) {
+                compass.set_and_save_offsets(i, magOffsets);
+            }
+        }
     }
 
 #if AUTOTUNE_ENABLED == ENABLED

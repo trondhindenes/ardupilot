@@ -28,7 +28,7 @@
 
    APMrover alpha version tester: Franco Borasio, Daniel Chapelat...
 
-   Please contribute your ideas! See http://dev.ardupilot.com for details
+   Please contribute your ideas! See http://dev.ardupilot.org for details
 */
 
 #include "Rover.h"
@@ -270,6 +270,10 @@ void Rover::update_logging2(void)
 
     if (should_log(MASK_LOG_RC))
         Log_Write_RC();
+
+    if (should_log(MASK_LOG_IMU)) {
+        DataFlash.Log_Write_Vibration(ins);
+    }
 }
 
 

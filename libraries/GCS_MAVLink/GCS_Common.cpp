@@ -1121,11 +1121,12 @@ void GCS_MAVLINK::send_ahrs(AP_AHRS &ahrs)
  */
 void GCS_MAVLINK::send_statustext_all(MAV_SEVERITY severity, const char *fmt, ...)
 {
-    char text[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN] {};
+    char text[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN+1] {};
     va_list arg_list;
     va_start(arg_list, fmt);
-    hal.util->vsnprintf((char *)text, sizeof(text), fmt, arg_list);
+    hal.util->vsnprintf((char *)text, sizeof(text)-1, fmt, arg_list);
     va_end(arg_list);
+    text[MAVLINK_MSG_STATUSTEXT_FIELD_TEXT_LEN] = 0;
     send_statustext(severity, mavlink_active, text);
 }
 
@@ -1419,7 +1420,7 @@ void GCS_MAVLINK::send_home(const Location &home) const
             chan,
             home.lat,
             home.lng,
-            home.alt / 100,
+            home.alt * 10,
             0.0f, 0.0f, 0.0f,
             q,
             0.0f, 0.0f, 0.0f);
@@ -1437,7 +1438,7 @@ void GCS_MAVLINK::send_home_all(const Location &home)
                     chan,
                     home.lat,
                     home.lng,
-                    home.alt / 100,
+                    home.alt * 10,
                     0.0f, 0.0f, 0.0f,
                     q,
                     0.0f, 0.0f, 0.0f);

@@ -121,7 +121,7 @@ public:
     void Log_Write_Attitude(AP_AHRS &ahrs, const Vector3f &targets);
     void Log_Write_Current(const AP_BattMonitor &battery, int16_t throttle);
     void Log_Write_Compass(const Compass &compass);
-    void Log_Write_Mode(uint8_t mode);
+    void Log_Write_Mode(uint8_t mode, uint8_t reason = 0);
 
     void Log_Write_EntireMission(const AP_Mission &mission);
     void Log_Write_Mission_Cmd(const AP_Mission &mission,
@@ -159,6 +159,9 @@ public:
 
     void periodic_tasks(); // may want to split this into GCS/non-GCS duties
 
+    // number of blocks that have been dropped
+    uint32_t num_dropped(void) const;
+    
     vehicle_startup_message_Log_Writer _vehicle_messages;
 
     // parameter support

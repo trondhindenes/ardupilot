@@ -187,9 +187,9 @@ void DataFlash_Class::Log_Write_Message(const char *message)
     FOR_EACH_BACKEND(Log_Write_Message(message));
 }
 
-void DataFlash_Class::Log_Write_Mode(uint8_t mode)
+void DataFlash_Class::Log_Write_Mode(uint8_t mode, uint8_t reason)
 {
-    FOR_EACH_BACKEND(Log_Write_Mode(mode));
+    FOR_EACH_BACKEND(Log_Write_Mode(mode, reason));
 }
 
 void DataFlash_Class::Log_Write_Parameter(const char *name, float value)
@@ -201,6 +201,14 @@ void DataFlash_Class::Log_Write_Mission_Cmd(const AP_Mission &mission,
                                             const AP_Mission::Mission_Command &cmd)
 {
     FOR_EACH_BACKEND(Log_Write_Mission_Cmd(mission, cmd));
+}
+
+uint32_t DataFlash_Class::num_dropped() const
+{
+    if (_next_backend == 0) {
+        return 0;
+    }
+    return backends[0]->num_dropped();
 }
 
 

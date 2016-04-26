@@ -52,10 +52,16 @@ class Board:
             else:
                 cfg.env[k] = val
 
+        cfg.load('cxx_checks')
+
     def configure_env(self, cfg, env):
         # Use a dictionary instead of the convetional list for definitions to
         # make easy to override them. Convert back to list before consumption.
         env.DEFINES = {}
+
+        env.prepend_value('INCLUDES', [
+            cfg.srcnode.find_dir('libraries/AP_Common/missing').abspath()
+        ])
 
         env.CFLAGS += [
             '-ffunction-sections',
@@ -170,6 +176,11 @@ class sitl(Board):
             'AP_HAL_SITL',
             'SITL',
         ]
+
+        if sys.platform == 'cygwin':
+            env.LIB += [
+                'winmm',
+            ]
 
 class linux(Board):
     def configure_env(self, cfg, env):
@@ -333,9 +344,6 @@ class px4(Board):
             CONFIG_HAL_BOARD = 'HAL_BOARD_PX4',
             HAVE_STD_NULLPTR_T = 0,
         )
-        env.prepend_value('INCLUDES', [
-            cfg.srcnode.find_dir('libraries/AP_Common/missing').abspath()
-        ])
         env.CXXFLAGS += [
             '-Wlogical-op',
             '-Wframe-larger-than=1300',

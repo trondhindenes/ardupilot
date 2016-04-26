@@ -88,12 +88,16 @@ public:
     bool Log_Write_Message(const char *message);
     bool Log_Write_Mission_Cmd(const AP_Mission &mission,
                                const AP_Mission::Mission_Command &cmd);
-    bool Log_Write_Mode(uint8_t mode);;
+    bool Log_Write_Mode(uint8_t mode, uint8_t reason = 0);
     bool Log_Write_Parameter(const char *name, float value);
     bool Log_Write_Parameter(const AP_Param *ap,
                              const AP_Param::ParamToken &token,
                              enum ap_var_type type);
 
+    uint32_t num_dropped(void) const {
+        return _dropped;
+    }
+    
 protected:
     uint32_t dropped;
     uint8_t internal_errors; // uint8_t - wishful thinking?

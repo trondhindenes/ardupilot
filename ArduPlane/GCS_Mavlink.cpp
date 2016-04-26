@@ -622,10 +622,10 @@ bool GCS_MAVLINK::try_send_message(enum ap_message id)
         return false;
     }
 
-    // if we don't have at least 1ms remaining before the main loop
+    // if we don't have at least 0.2ms remaining before the main loop
     // wants to fire then don't send a mavlink message. We want to
     // prioritise the main flight control loop over communications
-    if (!plane.in_mavlink_delay && plane.scheduler.time_available_usec() < 1200) {
+    if (!plane.in_mavlink_delay && plane.scheduler.time_available_usec() < 200) {
         plane.gcs_out_of_time = true;
         return false;
     }
@@ -1146,6 +1146,82 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
         break;
     }
 
+    case MAVLINK_MSG_ID_COMMAND_INT:
+    {
+        // decode
+        mavlink_command_int_t packet;
+        mavlink_msg_command_int_decode(msg, &packet);
+
+        uint8_t result = MAV_RESULT_UNSUPPORTED;
+
+        switch(packet.command) {
+
+        case MAV_CMD_DO_REPOSITION:
+            Location requested_position {};
+            requested_position.lat = packet.x;
+            requested_position.lng = packet.y;
+
+            // check the floating representation for overflow of altitude
+            if (abs(packet.z * 100.0f) >= 0x7fffff) {
+                result = MAV_RESULT_FAILED;
+                break;
+            }
+            requested_position.alt = (int32_t)(packet.z * 100.0f);
+
+            // load option flags
+            if (packet.frame == MAV_FRAME_GLOBAL_RELATIVE_ALT_INT) {
+                requested_position.flags.relative_alt = 1;
+            }
+            else if (packet.frame == MAV_FRAME_GLOBAL_TERRAIN_ALT_INT) {
+                requested_position.flags.terrain_alt = 1;
+            }
+            else if (packet.frame != MAV_FRAME_GLOBAL_INT) {
+                // not a supported frame
+                break;
+            }
+
+            if (is_zero(packet.param4)) {
+                requested_position.flags.loiter_ccw = 0;
+            } else {
+                requested_position.flags.loiter_ccw = 1;
+            }
+
+            if (location_sanitize(plane.current_loc, requested_position)) {
+                // if the location wasn't already sane don't load it
+                result = MAV_RESULT_FAILED; // failed as the location is not valid
+                break;
+            }
+
+            // location is valid load and set
+            if (((int32_t)packet.param2 & MAV_DO_REPOSITION_FLAGS_CHANGE_MODE) ||
+                (plane.control_mode == GUIDED)) {
+                plane.set_mode(GUIDED);
+                plane.guided_WP_loc = requested_position;
+
+                // add home alt if needed
+                if (plane.guided_WP_loc.flags.relative_alt) {
+                    plane.guided_WP_loc.alt += plane.home.alt;
+                    plane.guided_WP_loc.flags.relative_alt = 0;
+                }
+
+                plane.set_guided_WP();
+
+                result = MAV_RESULT_ACCEPTED;
+            } else {
+                result = MAV_RESULT_FAILED; // failed as we are not in guided
+            }
+            break;
+        }
+
+        mavlink_msg_command_ack_send_buf(
+            msg,
+            chan,
+            packet.command,
+            result);
+
+        break;
+    }
+
     case MAVLINK_MSG_ID_COMMAND_LONG:
     {
         // decode
@@ -1230,6 +1306,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
         case MAV_CMD_DO_MOUNT_CONTROL:
 #if MOUNT == ENABLED
             plane.camera_mount.control(packet.param1, packet.param2, packet.param3, (MAV_MOUNT_MODE) packet.param7);
+            result = MAV_RESULT_ACCEPTED;
 #endif
             break;
 
@@ -1549,7 +1626,11 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
             break;
             
         case MAV_CMD_DO_VTOL_TRANSITION:
-            result = plane.quadplane.handle_do_vtol_transition(packet);
+            if (!plane.quadplane.handle_do_vtol_transition((enum MAV_VTOL_STATE)packet.param1)) {
+                result = MAV_RESULT_FAILED;
+            } else {
+                result = MAV_RESULT_ACCEPTED;
+            }
             break;
             
         default:
@@ -1771,6 +1852,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
 
         if (hal.rcin->set_overrides(v, 8)) {
             plane.failsafe.last_valid_rc_ms = AP_HAL::millis();
+            plane.failsafe.AFS_last_valid_rc_ms =  plane.failsafe.last_valid_rc_ms;
         }
 
         // a RC override message is consiered to be a 'heartbeat' from
@@ -1938,7 +2020,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
         Location new_home_loc {};
         new_home_loc.lat = packet.latitude;
         new_home_loc.lng = packet.longitude;
-        new_home_loc.alt = packet.altitude * 100;
+        new_home_loc.alt = packet.altitude / 10;
         plane.ahrs.set_home(new_home_loc);
         plane.home_is_set = HOME_SET_NOT_LOCKED;
         plane.Log_Write_Home_And_Origin();

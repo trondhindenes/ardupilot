@@ -14,6 +14,7 @@ class QuadPlane
 {
 public:
     friend class Plane;
+    friend class Tuning;
     QuadPlane(AP_AHRS_NavEKF &_ahrs);
 
     // var_info for holding Parameter information
@@ -41,7 +42,7 @@ public:
         return available() && assisted_flight;
     }
     
-    bool handle_do_vtol_transition(const mavlink_command_long_t &packet);
+    bool handle_do_vtol_transition(enum MAV_VTOL_STATE state);
 
     bool do_vtol_takeoff(const AP_Mission::Mission_Command& cmd);
     bool do_vtol_land(const AP_Mission::Mission_Command& cmd);
@@ -58,6 +59,13 @@ public:
         return last_throttle * 0.1f;
     }
 
+    // return desired forward throttle percentage
+    int8_t forward_throttle_pct(void);        
+    float get_weathervane_yaw_rate_cds(void);
+
+    // see if we are flying from vtol point of view
+    bool is_flying_vtol(void);
+    
     struct PACKED log_QControl_Tuning {
         LOG_PACKET_HEADER;
         uint64_t time_us;
@@ -68,6 +76,10 @@ public:
         int32_t  baro_alt;
         int16_t  desired_climb_rate;
         int16_t  climb_rate;
+        float    dvx;
+        float    dvy;
+        float    dax;
+        float    day;
     };
         
 private:
@@ -137,6 +149,7 @@ private:
     bool should_relax(void);
     void motors_output(void);
     void Log_Write_QControl_Tuning();
+    float landing_descent_rate_cms(float height_above_ground);
     
     // setup correct aux channels for frame class
     void setup_default_channels(uint8_t num_motors);
@@ -164,6 +177,20 @@ private:
     
     AP_Int8 enable;
     AP_Int8 transition_pitch_max;
+
+    struct {
+        AP_Float gain;
+        float integrator;
+        uint32_t lastt_ms;
+        int8_t last_pct;
+    } vel_forward;
+
+    struct {
+        AP_Float gain;
+        AP_Float min_roll;
+        uint32_t last_pilot_input_ms;
+        float last_output;
+    } weathervane;
     
     bool initialised;
     
@@ -203,15 +230,19 @@ private:
         QLAND_FINAL,
         QLAND_COMPLETE
     } land_state;
-    int32_t land_yaw_cd;
-    float land_wp_proportion;
-    float land_speed_scale;
+    struct {
+        int32_t yaw_cd;
+        float speed_scale;
+        Vector2f target_velocity;
+        float max_speed;
+    } land;
 
     enum frame_class {
         FRAME_CLASS_QUAD=0,
         FRAME_CLASS_HEXA=1,
         FRAME_CLASS_OCTA=2,
         FRAME_CLASS_OCTAQUAD=3,
+        FRAME_CLASS_Y6=4,
     };
 
     struct {

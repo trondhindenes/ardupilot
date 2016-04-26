@@ -162,6 +162,11 @@ void Plane::read_radio()
         return;
     }
 
+    if(!failsafe.ch3_failsafe)
+    {
+        failsafe.AFS_last_valid_rc_ms = millis();
+    }
+
     failsafe.last_valid_rc_ms = millis();
 
     elevon.ch1_temp = channel_roll->read();
@@ -215,6 +220,8 @@ void Plane::read_radio()
     } else {
         rudder_input = channel_rudder->control_in;
     }
+
+    tuning.check_input();
 }
 
 void Plane::control_failsafe(uint16_t pwm)

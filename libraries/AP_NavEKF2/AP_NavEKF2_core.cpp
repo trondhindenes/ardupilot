@@ -126,6 +126,7 @@ void NavEKF2_core::InitialiseVariables()
     lastPosPassTime_ms = imuSampleTime_ms;
     lastHgtPassTime_ms = imuSampleTime_ms;
     lastTasPassTime_ms = imuSampleTime_ms;
+    lastSynthYawTime_ms = imuSampleTime_ms;
     lastTimeGpsReceived_ms = 0;
     secondLastGpsTime_ms = 0;
     lastDecayTime_ms = imuSampleTime_ms;
@@ -249,6 +250,7 @@ void NavEKF2_core::InitialiseVariables()
     imuDataDownSampledNew.delVelDT = 0.0f;
     runUpdates = false;
     framesSincePredict = 0;
+    lastMagOffsetsValid = false;
 
     // zero data buffers
     storedIMU.reset();
