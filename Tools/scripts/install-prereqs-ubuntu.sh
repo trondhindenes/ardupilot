@@ -54,11 +54,12 @@ else
     APT_GET="sudo apt-get"
 fi
 
-sudo usermod -a -G dialout $USER
+#sudo usermod -a -G dialout $USER
 
 $APT_GET remove modemmanager
 $APT_GET update
-$APT_GET install $BASE_PKGS $SITL_PKGS $PX4_PKGS $BEBOP_PKGS $UBUNTU64_PKGS
+#$APT_GET install $BASE_PKGS $SITL_PKGS $PX4_PKGS $BEBOP_PKGS $UBUNTU64_PKGS
+$APT_GET install $BASE_PKGS $SITL_PKGS $PX4_PKGS
 sudo pip2 -q install $PYTHON_PKGS
 
 if [ ! -d $OPT/$ARM_ROOT ]; then
@@ -90,7 +91,7 @@ if ! grep -Fxq "$exportline2" ~/.profile ; then
     fi
 fi
 
-apt-cache search arm-none-eabi
+#apt-cache search arm-none-eabi
 
 (
  cd ardupilot

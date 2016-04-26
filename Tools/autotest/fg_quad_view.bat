@@ -1,13 +1,12 @@
 set AUTOTESTDIR="%~dp0\aircraft"
 
-c:
-cd "\Program Files\FlightGear 2016.1.1\bin"
-fgfs ^
+start fgfs ^
     --native-fdm=socket,in,10,,5503,udp ^
     --fdm=external ^
     --aircraft=arducopter ^
     --fg-aircraft=%AUTOTESTDIR% ^
-    --airport=KSFO ^
+    --lon=7.676106 ^
+    --lat=62.555517 ^
     --geometry=650x550 ^
     --bpp=32 ^
     --disable-anti-alias-hud ^
@@ -22,4 +21,3 @@ fgfs ^
     --disable-specular-highlight ^
     --disable-anti-alias-hud ^
     --wind=0@0
-pause
